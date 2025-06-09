@@ -17,6 +17,7 @@ export const parseConfig = (moduleConfig) => {
   let bundleUrl = deepAccess(moduleConfig, 'params.bundleUrl', null);
   let adserverTargeting = deepAccess(moduleConfig, 'params.adserverTargeting', true);
   let handleRtd = deepAccess(moduleConfig, 'params.handleRtd', null);
+  let mockMatcherFiltering = deepAccess(moduleConfig, 'params.mockMatcherFiltering', true);
 
   // If present, trim the bundle URL
   if (typeof bundleUrl === 'string') {
@@ -34,7 +35,7 @@ export const parseConfig = (moduleConfig) => {
     throw new Error(LOG_PREFIX + ' handleRtd must be a function');
   }
 
-  return {bundleUrl, adserverTargeting, handleRtd};
+  return {bundleUrl, adserverTargeting, handleRtd, mockMatcherFiltering};
 }
 
 /**
@@ -44,7 +45,7 @@ export const parseConfig = (moduleConfig) => {
  * @param mergeFn Function to merge data
  * @returns {Promise<void>}
  */
-export const defaultHandleRtd = async (reqBidsConfigObj, optableExtraData, mergeFn) => {
+export const defaultHandleRtd = async (reqBidsConfigObj, optableExtraData, mergeFn, mockMatcherFiltering) => {
   const optableBundle = /** @type {Object} */ (window.optable);
   // Get targeting data from cache, if available
   let targetingData = optableBundle?.instance?.targetingFromCache();
@@ -60,11 +61,121 @@ export const defaultHandleRtd = async (reqBidsConfigObj, optableExtraData, merge
     return;
   }
 
-  mergeFn(
-    reqBidsConfigObj.ortb2Fragments.global,
-    targetingData.ortb2,
+  if (!mockMatcherFiltering) {
+    mergeFn(
+      reqBidsConfigObj.ortb2Fragments.global,
+      targetingData.ortb2,
+    );
+    logMessage('Prebid\'s global ORTB2 object after merge: ', reqBidsConfigObj.ortb2Fragments.global);
+
+    return;
+  }
+
+  const MOCKED_ID5_EIDS = [
+    {
+      inserter: "optable.co",
+      source: "trustmebro1.com",
+      matcher: "id5.io",
+      uids: [
+        { id: "trust_me_1_1" },
+        { id: "trust_me_1_2" },
+        { id: "trust_me_1_3" },
+      ],
+    },
+    {
+      inserter: "optable.co",
+      source: "trustmebro2.com",
+      matcher: "id5.io",
+      uids: [
+        { id: "trust_me_2_1" },
+        { id: "trust_me_2_2" },
+        { id: "trust_me_2_3" },
+      ],
+    },
+    {
+      inserter: "optable.co",
+      source: "trustmebro3.com",
+      matcher: "id5.io",
+      uids: [
+        { id: "trust_me_3_1" },
+        { id: "trust_me_3_2" },
+        { id: "trust_me_3_3" },
+      ],
+    },
+    {
+      inserter: "optable.co",
+      source: "donottrustmebro.com",
+      matcher: "id5.io",
+      uids: [
+        { id: "do_not_trust_me_1" },
+        { id: "do_not_trust_me_2" },
+        { id: "do_not_trust_me_3" },
+      ],
+    },
+  ];
+
+  const FILTER_FROM_GLOBAL_ORTB2_MAPPING = [
+    {
+      // matcher to NOT include to the global ORTB2 object
+      matcher: "id5.io",
+      // "source" to "bidder code" mapping to route EIDs to respective bidder adapters
+      siteToBidAdapter: {
+          "triplelift.com": "triplelift", // triplelift.com's bider code (from respective bidder adapter, tripleliftBidAdapter.js)
+          "indexexchange.com": "ix", // same for indexexchange.com, ixBidAdapter.js
+          "trustmebro1.com": "pubmatic", // routing fake sources to pubmaticBidAdapter.js
+          "trustmebro2.com": "pubmatic",
+          "trustmebro3.com": "pubmatic",
+      },
+    },
+  ];
+
+  // add the mocked EIDs to the response from the Optable SDK
+  targetingData.ortb2.user = targetingData.ortb2.user || {};
+  targetingData.ortb2.user.eids = targetingData.ortb2.user.eids || [];
+  targetingData.ortb2.user.eids.push(...MOCKED_ID5_EIDS);
+
+  logMessage('Targeting data with mocked EIDs: ', JSON.parse(JSON.stringify(targetingData.ortb2)));
+
+  /*
+   * Filter the EIDs based on the mock matcher filtering configuration
+   */
+
+  // preserve the original EIDs
+
+  const originalEids = targetingData.ortb2.user.eids.slice();
+
+  // global EIDs
+  targetingData.ortb2.user.eids = targetingData.ortb2.user.eids.filter(eid =>
+    !FILTER_FROM_GLOBAL_ORTB2_MAPPING.some(mapping => mapping.matcher === eid.matcher)
   );
-  logMessage('Prebid\'s global ORTB2 object after merge: ', reqBidsConfigObj.ortb2Fragments.global);
+
+  logMessage('EIDs to be kept for global ORTB2 enrichment: ', targetingData.ortb2.user.eids);
+
+  // enrich per-bidder EIDs using filtered data
+  const perBidderEids = {};
+  originalEids.forEach(eid => {
+    const mapping =
+      FILTER_FROM_GLOBAL_ORTB2_MAPPING.find(mapping => mapping.matcher === eid.matcher);
+    if (mapping && Object.keys(mapping.siteToBidAdapter).includes(eid.source)) {
+      const bidderCode = mapping.siteToBidAdapter[eid.source];
+      perBidderEids[bidderCode] = perBidderEids[bidderCode] || { user: { eids: [] } };
+      perBidderEids[bidderCode].user.eids.push(eid);
+    }
+  });
+
+  logMessage('Per-bidder EIDs to be enriched: ', perBidderEids);
+
+  // merge the per-bidder EIDs into the `reqBidsConfigObj.ortb2Fragments.bidder` object
+  mergeDeep(
+    reqBidsConfigObj.ortb2Fragments.bidder,
+    perBidderEids
+  );
+
+  // merge global ORTB2 data into the `reqBidsConfigObj.ortb2Fragments.global` object
+  mergeDeep(
+    reqBidsConfigObj.ortb2Fragments.global,
+    targetingData.ortb2
+  );
 };
 
 /**
@@ -72,13 +183,14 @@ export const defaultHandleRtd = async (reqBidsConfigObj, optableExtraData, merge
  * @param {Function} handleRtdFn Function to handle RTD data
  * @param {Object} reqBidsConfigObj Bid request configuration object
  * @param {Object} optableExtraData Additional data to be used by the Optable SDK
+ * @param {Boolean} mockMatcherFiltering
  * @param {Function} mergeFn Function to merge data
  */
-export const mergeOptableData = async (handleRtdFn, reqBidsConfigObj, optableExtraData, mergeFn) => {
+export const mergeOptableData = async (handleRtdFn, reqBidsConfigObj, optableExtraData, mergeFn, mockMatcherFiltering) => {
   if (handleRtdFn.constructor.name === 'AsyncFunction') {
-    await handleRtdFn(reqBidsConfigObj, optableExtraData, mergeFn);
+    await handleRtdFn(reqBidsConfigObj, optableExtraData, mergeFn, mockMatcherFiltering);
   } else {
-    handleRtdFn(reqBidsConfigObj, optableExtraData, mergeFn);
+    handleRtdFn(reqBidsConfigObj, optableExtraData, mergeFn, mockMatcherFiltering);
   }
 };
 
@@ -91,7 +203,7 @@ export const mergeOptableData = async (handleRtdFn, reqBidsConfigObj, optableExt
 export const getBidRequestData = (reqBidsConfigObj, callback, moduleConfig, userConsent) => {
   try {
     // Extract the bundle URL from the module configuration
-    const {bundleUrl, handleRtd} = parseConfig(moduleConfig);
+    const {bundleUrl, handleRtd, mockMatcherFiltering} = parseConfig(moduleConfig);
 
     const handleRtdFn = handleRtd || defaultHandleRtd;
     const optableExtraData = config.getConfig('optableRtdConfig') || {};
@@ -104,7 +216,7 @@ export const getBidRequestData = (reqBidsConfigObj, callback, moduleConfig, user
       // Load Optable JS bundle and merge the data
       loadExternalScript(bundleUrl, MODULE_TYPE_RTD, MODULE_NAME, () => {
         logMessage('Successfully loaded Optable JS bundle');
-        mergeOptableData(handleRtdFn, reqBidsConfigObj, optableExtraData, mergeDeep).then(callback, callback);
+        mergeOptableData(handleRtdFn, reqBidsConfigObj, optableExtraData, mergeDeep, mockMatcherFiltering).then(callback, callback);
       }, document);
     } else {
       // At this point, we assume that the Optable JS bundle is already
@@ -115,7 +227,7 @@ export const getBidRequestData = (reqBidsConfigObj, callback, moduleConfig, user
       window.optable = window.optable || { cmd: [] };
       window.optable.cmd.push(() => {
         logMessage('Optable JS bundle found on the page');
-        mergeOptableData(handleRtdFn, reqBidsConfigObj, optableExtraData, mergeDeep).then(callback, callback);
+        mergeOptableData(handleRtdFn, reqBidsConfigObj, optableExtraData, mergeDeep, mockMatcherFiltering).then(callback, callback);
       });
     }
   } catch (error) {
