@@ -36,7 +36,6 @@ const _approvedLoadExternalJSList = [
   'wurfl',
   'nodalsAi',
   'anonymised',
-  'optable',
   // UserId Submodules
   'justtag',
   'tncId',

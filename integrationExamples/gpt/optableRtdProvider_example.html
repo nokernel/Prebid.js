@@ -14,7 +14,7 @@
             font-size: 1.5em;
             line-height: 1.6;
             font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
-            margin: 0;
+            margin: 0 0 32px;
         }
 
         .container {
@@ -36,6 +36,27 @@
             letter-spacing: -0.5px;
         }
 
+        h2 {
+            font-size: 24px;
+            line-height: 1.35;
+            font-weight: 100;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            font-size: 15px;
+            line-height: 24px;
+            font-weight: 400;
+            /*letter-spacing: -0.5px;*/
+        }
+
+        ul > li {
+            font-size: 15px;
+            line-height: 24px;
+            font-weight: 400;
+            /*letter-spacing: -0.5px;*/
+        }
+
         a {
             color: #1eaedb;
             text-decoration: underline;
@@ -47,8 +68,8 @@
             }
         }
 
-        #enriched-optable-data {
-            font-size: 12px;
+        pre {
+            font-size: 13px;
             max-width: 100%;
             overflow-x: scroll;
             padding: 16px;
@@ -83,114 +104,132 @@
             pbjs.initAdserverSet = true;
         }
 
-        pbjs.que.push(function () {
-            var adUnits = [
-                {
-                    code: '/22081946781/web-sdk-demo-gam360/header-ad',
-                    mediaTypes: {
-                        banner: {
-                            sizes: [[728, 90]],
+        function startBidding() {
+            pbjs.que.push(function () {
+                var adUnits = [
+                    {
+                        code: '/22081946781/web-sdk-demo-gam360/header-ad',
+                        mediaTypes: {
+                            banner: {
+                                sizes: [[728, 90]],
+                            },
                         },
-                    },
-                    bids: [{
-                        bidder: 'appnexus',
-                        params: {
-                            placementId: 13232392,
-                        }
-                    }]
-                },
-                {
-                    code: '/22081946781/web-sdk-demo-gam360/box-ad',
-                    mediaTypes: {
-                        banner: {
-                            sizes: [[250, 250], [300, 250], [200, 200]],
-                        },
-                    },
-                    bids: [{
-                        bidder: 'appnexus',
-                        params: {
-                            placementId: 13232392,
-                        }
-                    }]
-                },
-                {
-                    code: '/22081946781/web-sdk-demo-gam360/footer-ad',
-                    mediaTypes: {
-                        banner: {
-                            sizes: [[728, 90]],
-                        },
-                    },
-                    bids: [{
-                        bidder: 'appnexus',
-                        params: {
-                            placementId: 13232392,
-                        }
-                    }]
-                },
-            ];
-
-            pbjs.setConfig({
-                optableRtdConfig: { // optional, check the doc for explanation
-                    email: 'email-sha256-hash',
-                    phone: 'phone-sha256-hash',
-                    postal_code: 'postal_code',
-                },
-                debug: true, // use only for testing, remove in production
-                realTimeData: {
-                    auctionDelay: 1000, // should be set lower in production use
-                    dataProviders: [
-                        {
-                            name: 'optable',
-                            waitForIt: true,
+                        bids: [{
+                            bidder: 'pubmatic',
                             params: {
-                                // bundleUrl: "https://prebidtest.solutions.cdn.optable.co/public-assets/prebidtest-sdk.js?hello=world",
-                                // adserverTargeting: false,
-                                // handleRtd: async (reqBidsConfigObj, optableExtraData, mergeFn) => {
-                                //     const optableBundle = /** @type {Object} */ (window.optable);
-                                //     console.warn('Entering custom RTD handler');
-                                //     console.warn('reqBidsConfigObj', reqBidsConfigObj);
-                                //     console.warn('optableExtraData', optableExtraData);
-                                //     console.warn('mergeFn', mergeFn);
-                                //
-                                //     // Call Optable DCN for targeting data and return the ORTB2 object
-                                //     const targetingData = await optableBundle.instance.targeting();
-                                //
-                                //     if (!targetingData || !targetingData.ortb2) {
-                                //         return;
-                                //     }
-                                //
-                                //     mergeFn(
-                                //         reqBidsConfigObj.ortb2Fragments.global,
-                                //         targetingData.ortb2,
-                                //     );
-                                // }
+                                publisherId: "156209",
                             }
-                        }
-                    ]
-                },
-            });
+                        }]
+                    },
+                    {
+                        code: '/22081946781/web-sdk-demo-gam360/box-ad',
+                        mediaTypes: {
+                            banner: {
+                                sizes: [[250, 250], [300, 250], [200, 200]],
+                            },
+                        },
+                        bids: [{
+                            bidder: 'pubmatic',
+                            params: {
+                                publisherId: "156209",
+                            }
+                        }]
+                    },
+                    {
+                        code: '/22081946781/web-sdk-demo-gam360/footer-ad',
+                        mediaTypes: {
+                            banner: {
+                                sizes: [[728, 90]],
+                            },
+                        },
+                        bids: [{
+                            bidder: 'pubmatic',
+                            params: {
+                                publisherId: "156209",
+                            }
+                        }]
+                    },
+                ];
 
-            pbjs.addAdUnits(adUnits);
+                pbjs.setConfig({
+                    optableRtdConfig: { // optional, check the doc for explanation
+                        email: 'email-sha256-hash',
+                        phone: 'phone-sha256-hash',
+                        postal_code: 'postal_code',
+                    },
+                    debug: true, // use only for testing, remove in production
+                    realTimeData: {
+                        auctionDelay: 50, // should be set lower in production use
+                        dataProviders: [
+                            {
+                                name: 'optable',
+                                waitForIt: true,
+                                params: {
+                                    // adserverTargeting: false,
+                                    // handleRtd: async (reqBidsConfigObj, optableExtraData, mergeFn) => {
+                                    //     const optableBundle = /** @type {Object} */ (window.optable);
+                                    //     console.warn('Entering custom RTD handler');
+                                    //     console.warn('reqBidsConfigObj', reqBidsConfigObj);
+                                    //     console.warn('optableExtraData', optableExtraData);
+                                    //     console.warn('mergeFn', mergeFn);
+                                    //
+                                    //     // Call Optable DCN for targeting data and return the ORTB2 object
+                                    //     const targetingData = await optableBundle.instance.targeting();
+                                    //
+                                    //     if (!targetingData || !targetingData.ortb2) {
+                                    //         return;
+                                    //     }
+                                    //
+                                    //     mergeFn(
+                                    //         reqBidsConfigObj.ortb2Fragments.global,
+                                    //         targetingData.ortb2,
+                                    //     );
+                                    // }
+                                }
+                            }
+                        ]
+                    },
+                });
 
-            pbjs.onEvent('bidRequested', function (data) {
-                try {
-                    window.optable.cmd.push(() => {
-                        document.getElementById('enriched-optable').style.display = 'block';
-                        document.getElementById('enriched-optable-data').textContent = JSON.stringify(data.ortb2.user, null, 2);
-                    });
-                } catch (e) {
-                    console.error('Exception while trying to display enriched data', e);
-                }
-            });
+                pbjs.addAdUnits(adUnits);
 
-            pbjs.requestBids({
-                timeout: PREBID_TIMEOUT,
-                bidsBackHandler: function (bidResponses) {
-                    initAdserver();
-                }
+                pbjs.onEvent('bidRequested', function (data) {
+                    try {
+                        window.optable.cmd.push(() => {
+                            document.getElementById('enriched-optable').style.display = 'block';
+                            const jsonContent = JSON.stringify(data.ortb2.user, null, 2);
+                            if (jsonContent) {
+                                document.getElementById('enriched-optable-data').textContent = jsonContent;
+                            }
+                        });
+                    } catch (e) {
+                        console.error('Exception while trying to display enriched data', e);
+                    }
+                });
+
+                pbjs.requestBids({
+                    timeout: PREBID_TIMEOUT,
+                    bidsBackHandler: function (bidResponses) {
+                        initAdserver();
+                    }
+                });
             });
+            setTimeout(initAdserver, FAILSAFE_TIMEOUT);
+        }
+
+        const OPTABLE_INSTANCE_NAME = 'instance'; // This should match the instance name in the Optable bundle
+
+        window.optable = window.optable || { cmd: [] };
+        window.optable.cmd.push(() => {
+            console.log('Optable:', window.optable);
+            console.log('Optable instance ready:', window.optable?.[OPTABLE_INSTANCE_NAME]);
+            const targetingIsCached = window.optable?.[OPTABLE_INSTANCE_NAME]?.targetingFromCache();
+            if (!targetingIsCached || !targetingIsCached.ortb2) {
+                window.optable?.[OPTABLE_INSTANCE_NAME]?.targeting();
+            }
+
+            startBidding();
         });
-        setTimeout(initAdserver, FAILSAFE_TIMEOUT);
     </script>
 
     <script>
@@ -236,10 +275,54 @@
             <hr class="delim" />
         </div>
         <div class="row">
-            <h1>Optable RTD module example</h1>
+            <h1>Prebid.js Integration with OptableRTD</h1>
+            <h2>Overview</h2>
+            <p>
+                This demo demonstrates how to integrate Optable's targeting capabilities with Prebid.js using the
+                <a href="https://docs.prebid.org/dev-docs/modules/optableRtdProvider.html" target="_blank">OptableRTD module</a>.
+                The implementation assumes Google Ad Manager (GAM) as the primary ad server, integrated via
+                <a href="https://developers.google.com/publisher-tag/guides/get-started" target="_blank">Google Publisher Tag (GPT)</a>.
+            </p>
+            <h2>Key Features</h2>
+            <ul>
+                <li>Loads active visitor cohorts and passes them to Prebid.js via OptableRTD</li>
+                <li>Automatically forwards matching cohorts to GAM for targeting</li>
+                <li>Supports local cache updates for improved targeting accuracy</li>
+                <li>Configurable GAM targeting override via localStorage</li>
+            </ul>
+            <h2>Implementation</h2>
+            <p>
+                The Prebid.js configuration requires minimal setup. Here's the essential configuration:
+            </p>
+            <pre><code>pbjs.mergeConfig({
+  debug: true,   // use only for testing, remove in production
+  priceGranularity: "low",
+  userSync: {
+    iframeEnabled: true,
+    enabledBidders: ["pubmatic"]
+  },
+  realTimeData: {
+    auctionDelay: 50,
+    dataProviders: [{
+      name: 'optable',
+      waitForIt: true  // Required to respect auctionDelay
+    }]
+  }
+});</code></pre>
+            <h2>Important Notes</h2>
+            <ul>
+                <li>
+                  <strong>Targeting Cache:</strong> For optimal targeting accuracy, call <code>targeting</code>
+                  on page load to update the local cache, as the RTD module only uses cached values.
+                </li>
+                <li>
+                  <strong>GAM Targeting Override:</strong> Set <code>localStorage.disableGamTargeting = "true"</code>
+                  before page load to prevent the SDK from sending targeting data to GAM.
+                </li>
+            </ul>
         </div>
 
-        <h3>web-sdk-demo-gam360/header-ad</h3>
+        <h2>web-sdk-demo-gam360/header-ad</h2>
         <div id="div-gpt-ad-1598295788551-0">
             <p>No response</p>
             <script type="text/javascript">
@@ -249,7 +332,7 @@
             </script>
         </div>
 
-        <h3>web-sdk-demo-gam360/box-ad</h3>
+        <h2>web-sdk-demo-gam360/box-ad</h2>
         <div id="div-gpt-ad-1598295897480-0">
             <p>No response</p>
             <script type="text/javascript">
@@ -259,7 +342,7 @@
             </script>
         </div>
 
-        <h3>web-sdk-demo-gam360/footer-ad</h3>
+        <h2>web-sdk-demo-gam360/footer-ad</h2>
         <div id="div-gpt-ad-1598296001655-0">
             <p>No response</p>
             <script type="text/javascript">
@@ -270,8 +353,9 @@
         </div>
 
         <div id="enriched-optable" style="display: none;">
-            <h3>Enriched ortb2.user data from Optable RTD module</h3>
-            <pre id="enriched-optable-data"></pre>
+            <h2>Enriched ortb2.user data from Optable RTD module</h2>
+            <pre id="enriched-optable-data">(this demo doesn't block the auction, so the data will be empty until the new auction is triggered)
+(refresh the page)</pre>
         </div>
     </main>
 </body>

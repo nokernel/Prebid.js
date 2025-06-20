@@ -17,36 +17,33 @@ Optable RTD submodule enriches the OpenRTB request by populating `user.ext.eids`
 Compile the Optable RTD Module with other modules and adapters into your Prebid.js build:
 
 ```bash
-gulp build --modules="rtdModule,optableRtdProvider,appnexusBidAdapter,..."
+gulp build --modules="rtdModule,optableRtdProvider,pubmaticBidAdapter,..."
 ```
 
 > Note that Optable RTD module is dependent on the global real-time data module, `rtdModule`.
 
 ### Preloading Optable SDK bundle
 
-In order to use the module you first need to register with Optable and obtain a bundle URL. The bundle URL may be specified as a `bundleUrl` parameter to the script, or otherwise it can be added directly to the page source as:
+To use the module, you first need to load the Optable SDK on your page. You can do this by adding the following script tag to your page, where `<bundleURL>` is the URL provided by Optable:
 
 ```html
 <script async src="<bundleURL>"></script>
 ```
 
-In this case bundleUrl parameter is not needed and the script will await bundle loading before delegating to it.
-
 ### Configuration
 
-This module is configured as part of the `realTimeData.dataProviders`. We recommend setting `auctionDelay` to 1000 ms and make sure `waitForIt` is set to `true` for the `Optable` RTD provider.
+This module is configured as part of the `realTimeData.dataProviders`. We recommend setting `auctionDelay` to 50 ms and make sure `waitForIt` is set to `true` for the `Optable` RTD provider.
 
 ```javascript
 pbjs.setConfig({
   debug: true, // we recommend turning this on for testing as it adds more logging
   realTimeData: {
-    auctionDelay: 1000,
+    auctionDelay: 50,
     dataProviders: [
       {
         name: 'optable',
         waitForIt: true, // should be true, otherwise the auctionDelay will be ignored
         params: {
-          bundleUrl: '<optional, your bundle url>',
           adserverTargeting: '<optional, true by default, set to true to also set GAM targeting keywords to ad slots>',
         },
       },
@@ -55,48 +52,13 @@ pbjs.setConfig({
 });
 ```
 
-### Additional input to the module
-
-Optable bundle may use PPIDs (publisher provided IDs) from the `user.ext.eids` as input.
-
-In addition, other arbitrary keys can be used as input, f.e. the following:
-
-- `optableRtdConfig.email` - a SHA256-hashed user email
-- `optableRtdConfig.phone` - a SHA256-hashed [E.164 normalized phone](https://unifiedid.com/docs/getting-started/gs-normalization-encoding#phone-number-normalization) (meaning a phone number consisting of digits and leading plus sign without spaces or any additional characters, f.e. a US number would be: `+12345678999`)
-- `optableRtdConfig.postal_code` - a ZIP postal code string
-
-Each of these identifiers is completely optional and can be provided through `pbjs.mergeConfig(...)` like so:
-
-```javascript
-pbjs.mergeConfig({
-  optableRtdConfig: {
-    email: await sha256("test@example.com"),
-    phone: await sha256("12345678999"),
-    postal_code: "61054"
-  }
-})
-```
-
-Where `sha256` function can be defined as:
-
-```javascript
-async function sha256(input) {
-  return [...new Uint8Array(
-    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input))
-  )].map(b => b.toString(16).padStart(2, "0")).join("");
-}
-```
-
-To handle PPIDs and the above input - a custom `handleRtd` function may need to be provided.
-
 ### Parameters
 
 | Name                     | Type     | Description                                                                                                                                                                                                                                                     | Default          | Notes    |
 |--------------------------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------|----------|
 | name                     | String   | Real time data module name                                                                                                                                                                                                                                      | Always `optable` |          |
-| waitForIt                | Boolean  | Should be set `true` together with `auctionDelay: 1000`                                                                                                                                                                                                         | `false`          |          |
+| waitForIt                | Boolean  | Should be set `true` together with `auctionDelay: 50`                                                                                                                                                                                                           | `false`          |          |
 | params                   | Object   |                                                                                                                                                                                                                                                                 |                  |          |
-| params.bundleUrl         | String   | Optable bundle URL                                                                                                                                                                                                                                              | `null`           | Optional |
 | params.adserverTargeting | Boolean  | If set to `true`, targeting keywords will be passed to the ad server upon auction completion                                                                                                                                                                    | `true`           | Optional |
 | params.handleRtd         | Function | An optional function that uses Optable data to enrich `reqBidsConfigObj` with the real-time data. If not provided, the module will do a default call to Optable bundle. The function signature is `[async] (reqBidsConfigObj, optableExtraData, mergeFn) => {}` | `null`           | Optional |
 
@@ -125,7 +87,7 @@ A `handleRtd` function implementation has access to its surrounding context incl
 If you want to see an example of how the optable RTD module works, run the following command:
 
 ```bash
-gulp serve --modules=optableRtdProvider,consentManagementGpp,consentManagementTcf,appnexusBidAdapter
+gulp serve --modules=optableRtdProvider,pubmaticBidAdapter
 ```
 
 and then open the following URL in your browser:
@@ -138,4 +100,4 @@ Open the browser console to see the logs.
 
 Any suggestions or questions can be directed to [prebid@optable.co](mailto:prebid@optable.co).
 
-Alternatively please open a new [issue](https://github.com/prebid/prebid-server-java/issues/new) or [pull request](https://github.com/prebid/prebid-server-java/pulls) in this repository.
+Alternatively, please open a new [issue](https://github.com/prebid/Prebid.js/issues/new) or [pull request](https://github.com/prebid/Prebid.js/pulls) in this repository.
