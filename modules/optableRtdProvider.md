@@ -17,7 +17,7 @@ Optable RTD submodule enriches the OpenRTB request by populating `user.ext.eids`
 Compile the Optable RTD Module with other modules and adapters into your Prebid.js build:
 
 ```bash
-gulp build --modules="rtdModule,optableRtdProvider,pubmaticBidAdapter,..."
+gulp build --modules="rtdModule,optableRtdProvider,..."
 ```
 
 > Note that Optable RTD module is dependent on the global real-time data module, `rtdModule`.
@@ -32,7 +32,7 @@ To use the module, you first need to load the Optable SDK on your page. You can 
 
 ### Configuration
 
-This module is configured as part of the `realTimeData.dataProviders`. We recommend setting `auctionDelay` to 50 ms and make sure `waitForIt` is set to `true` for the `Optable` RTD provider.
+This module is configured as part of the `realTimeData.dataProviders`. We recommend setting `auctionDelay` to at least 50 ms and make sure `waitForIt` is set to `true` for the `Optable` RTD provider.
 
 ```javascript
 pbjs.setConfig({
