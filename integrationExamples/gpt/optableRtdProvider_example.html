@@ -104,132 +104,111 @@
             pbjs.initAdserverSet = true;
         }
 
-        function startBidding() {
-            pbjs.que.push(function () {
-                var adUnits = [
-                    {
-                        code: '/22081946781/web-sdk-demo-gam360/header-ad',
-                        mediaTypes: {
-                            banner: {
-                                sizes: [[728, 90]],
-                            },
+        pbjs.que.push(function () {
+            var adUnits = [
+                {
+                    code: '/22081946781/web-sdk-demo-gam360/header-ad',
+                    mediaTypes: {
+                        banner: {
+                            sizes: [[728, 90]],
                         },
-                        bids: [{
-                            bidder: 'pubmatic',
-                            params: {
-                                publisherId: "156209",
-                            }
-                        }]
                     },
-                    {
-                        code: '/22081946781/web-sdk-demo-gam360/box-ad',
-                        mediaTypes: {
-                            banner: {
-                                sizes: [[250, 250], [300, 250], [200, 200]],
-                            },
+                    bids: [{
+                        bidder: 'pubmatic',
+                        params: {
+                            publisherId: "156209",
+                        }
+                    }]
+                },
+                {
+                    code: '/22081946781/web-sdk-demo-gam360/box-ad',
+                    mediaTypes: {
+                        banner: {
+                            sizes: [[250, 250], [300, 250], [200, 200]],
                         },
-                        bids: [{
-                            bidder: 'pubmatic',
-                            params: {
-                                publisherId: "156209",
-                            }
-                        }]
                     },
-                    {
-                        code: '/22081946781/web-sdk-demo-gam360/footer-ad',
-                        mediaTypes: {
-                            banner: {
-                                sizes: [[728, 90]],
-                            },
+                    bids: [{
+                        bidder: 'pubmatic',
+                        params: {
+                            publisherId: "156209",
+                        }
+                    }]
+                },
+                {
+                    code: '/22081946781/web-sdk-demo-gam360/footer-ad',
+                    mediaTypes: {
+                        banner: {
+                            sizes: [[728, 90]],
                         },
-                        bids: [{
-                            bidder: 'pubmatic',
+                    },
+                    bids: [{
+                        bidder: 'pubmatic',
+                        params: {
+                            publisherId: "156209",
+                        }
+                    }]
+                },
+            ];
+
+            pbjs.setConfig({
+                debug: true, // use only for testing, remove in production
+                realTimeData: {
+                    auctionDelay: 50,
+                    dataProviders: [
+                        {
+                            name: 'optable',
+                            waitForIt: true,
                             params: {
-                                publisherId: "156209",
+                                // adserverTargeting: false,
+                                // handleRtd: async (reqBidsConfigObj, optableExtraData, mergeFn) => {
+                                //     const optableBundle = /** @type {Object} */ (window.optable);
+                                //     console.warn('Entering custom RTD handler');
+                                //     console.warn('reqBidsConfigObj', reqBidsConfigObj);
+                                //     console.warn('optableExtraData', optableExtraData);
+                                //     console.warn('mergeFn', mergeFn);
+                                //
+                                //     // Call Optable DCN for targeting data and return the ORTB2 object
+                                //     const targetingData = await optableBundle.instance.targeting();
+                                //
+                                //     if (!targetingData || !targetingData.ortb2) {
+                                //         return;
+                                //     }
+                                //
+                                //     mergeFn(
+                                //         reqBidsConfigObj.ortb2Fragments.global,
+                                //         targetingData.ortb2,
+                                //     );
+                                // }
                             }
-                        }]
-                    },
-                ];
-
-                pbjs.setConfig({
-                    optableRtdConfig: { // optional, check the doc for explanation
-                        email: 'email-sha256-hash',
-                        phone: 'phone-sha256-hash',
-                        postal_code: 'postal_code',
-                    },
-                    debug: true, // use only for testing, remove in production
-                    realTimeData: {
-                        auctionDelay: 50, // should be set lower in production use
-                        dataProviders: [
-                            {
-                                name: 'optable',
-                                waitForIt: true,
-                                params: {
-                                    // adserverTargeting: false,
-                                    // handleRtd: async (reqBidsConfigObj, optableExtraData, mergeFn) => {
-                                    //     const optableBundle = /** @type {Object} */ (window.optable);
-                                    //     console.warn('Entering custom RTD handler');
-                                    //     console.warn('reqBidsConfigObj', reqBidsConfigObj);
-                                    //     console.warn('optableExtraData', optableExtraData);
-                                    //     console.warn('mergeFn', mergeFn);
-                                    //
-                                    //     // Call Optable DCN for targeting data and return the ORTB2 object
-                                    //     const targetingData = await optableBundle.instance.targeting();
-                                    //
-                                    //     if (!targetingData || !targetingData.ortb2) {
-                                    //         return;
-                                    //     }
-                                    //
-                                    //     mergeFn(
-                                    //         reqBidsConfigObj.ortb2Fragments.global,
-                                    //         targetingData.ortb2,
-                                    //     );
-                                    // }
-                                }
-                            }
-                        ]
-                    },
-                });
-
-                pbjs.addAdUnits(adUnits);
-
-                pbjs.onEvent('bidRequested', function (data) {
-                    try {
-                        window.optable.cmd.push(() => {
-                            document.getElementById('enriched-optable').style.display = 'block';
-                            const jsonContent = JSON.stringify(data.ortb2.user, null, 2);
-                            if (jsonContent) {
-                                document.getElementById('enriched-optable-data').textContent = jsonContent;
-                            }
-                        });
-                    } catch (e) {
-                        console.error('Exception while trying to display enriched data', e);
-                    }
-                });
-
-                pbjs.requestBids({
-                    timeout: PREBID_TIMEOUT,
-                    bidsBackHandler: function (bidResponses) {
-                        initAdserver();
-                    }
-                });
+                        }
+                    ]
+                },
             });
-            setTimeout(initAdserver, FAILSAFE_TIMEOUT);
-        }
 
-        const OPTABLE_INSTANCE_NAME = 'instance'; // This should match the instance name in the Optable bundle
+            pbjs.addAdUnits(adUnits);
 
-        window.optable = window.optable || { cmd: [] };
-        window.optable.cmd.push(() => {
-            console.log('Optable:', window.optable);
-            console.log('Optable instance ready:', window.optable?.[OPTABLE_INSTANCE_NAME]);
-            const targetingIsCached = window.optable?.[OPTABLE_INSTANCE_NAME]?.targetingFromCache();
-            if (!targetingIsCached || !targetingIsCached.ortb2) {
-                window.optable?.[OPTABLE_INSTANCE_NAME]?.targeting();
-            }
+            pbjs.onEvent('bidRequested', function (data) {
+                try {
+                    window.optable.cmd.push(() => {
+                        document.getElementById('enriched-optable').style.display = 'block';
+                        const jsonContent = JSON.stringify(data.ortb2.user, null, 2);
+                        if (jsonContent) {
+                            document.getElementById('enriched-optable-data').textContent = jsonContent;
+                        }
+                    });
+                } catch (e) {
+                    console.error('Exception while trying to display enriched data', e);
+                }
+            });
 
-            startBidding();
+            pbjs.requestBids({
+                timeout: PREBID_TIMEOUT,
+                bidsBackHandler: function (bidResponses) {
+                    initAdserver();
+                }
+            });
         });
+        setTimeout(initAdserver, FAILSAFE_TIMEOUT);
     </script>
 
     <script>
